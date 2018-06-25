@@ -1,0 +1,481 @@
+/*creates NZPropertyBrokers database*/
+CREATE DATABASE [NZPropertyBrokers]
+GO
+
+/*uses NZPropertyBrokers database*/
+USE [NZPropertyBrokers]
+GO
+
+/*creates employees table*/
+CREATE TABLE dbo.Employees(
+  /*sets emp num as PK*/
+  Emp_Num int NOT NULL
+    CONSTRAINT PK_Employees
+    PRIMARY KEY,
+  Emp_Type char(1) NOT NULL
+    CONSTRAINT CHK_Employees_EmpType
+    CHECK (Emp_Type IN ('A', 'I', 'O')),
+  Manager int
+    /*creates FK for emp num*/
+    CONSTRAINT FK1_Employees_Employees
+    FOREIGN KEY REFERENCES dbo.Employees(Emp_Num),
+  Emp_Lname varchar(30) NOT NULL,
+  Emp_Fname varchar(30) NOT NULL,
+  Emp_Street varchar(30) NOT NULL,
+  Emp_Suburb varchar(30) NOT NULL,
+  Emp_City varchar(30) NOT NULL,
+  Emp_StartDate date NOT NULL,
+  /*creates uniqueness constraint for emp num and emp type*/
+  CONSTRAINT UQ_Employees_EmpNum_EmpType
+    UNIQUE (Emp_Num, Emp_Type)
+)
+GO
+
+/*creates agents table*/
+CREATE TABLE dbo.Agents(
+  /*sets emp num as PK*/
+  Emp_Num int NOT NULL
+    CONSTRAINT PK_Agents
+    PRIMARY KEY
+	/*creates FK for emp num*/
+    CONSTRAINT FK1_Agents_Employees
+    FOREIGN KEY REFERENCES dbo.Employees(Emp_Num),
+  Emp_Type char(1) NOT NULL
+    /*creates check constraint for emp type to equal A*/
+    CONSTRAINT CHK_Agents_EmpType
+    CHECK (Emp_Type = 'A'),
+  Agent_Cert char(1) NOT NULL
+    /*creates check constraint for agent cert to equal C or R*/
+    CONSTRAINT CHK_Agents_AgentCert
+    CHECK (Agent_Cert IN ('C', 'R')),
+  Agent_Affil varchar(30) NOT NULL,
+  /*creates FK for emp num and emp type*/
+  CONSTRAINT FK2_Agents_Employees
+    FOREIGN KEY (Emp_Num, Emp_Type)
+    REFERENCES dbo.Employees(Emp_Num, Emp_Type),
+  /*creates uniqueness constraint for emp num and agent cert*/
+  CONSTRAINT UQ_Agents_EmpNum_AgentCert
+    UNIQUE (Emp_Num, Agent_Cert)
+)
+GO 
+
+CREATE TABLE dbo.Inspectors(
+  /*sets emp num as PK*/
+  Emp_Num int NOT NULL
+    CONSTRAINT PK_Inspectors
+    PRIMARY KEY
+	/*creates FK for emp num*/
+    CONSTRAINT FK1_Inspectors_Employees
+    FOREIGN KEY REFERENCES dbo.Employees(Emp_Num),
+  Emp_Type char(1) NOT NULL
+    /*creates check constraint for emp type to equal I*/
+    CONSTRAINT CHK_Inspectors_EmpType
+    CHECK (Emp_Type = 'I'),
+  Insp_Cert char(5) NOT NULL
+    /*creates check constraint for insp cert to equal IPENZ or NZIBI*/
+    CONSTRAINT CHK_Inspectors_Cert
+    CHECK (Insp_Cert IN ('IPENZ', 'NZIBI')),
+  Insp_Mem_Num int NOT NULL,
+  /*creates FK for emp num and emp type*/
+  CONSTRAINT FK2_Inpectors_Employees
+    FOREIGN KEY (Emp_Num, Emp_Type)
+  REFERENCES dbo.Employees(Emp_Num, Emp_Type),
+  /*creates uniqueness constraint for emp num and insp cert*/
+  CONSTRAINT UQ_Inspectors_EmpNum_Insp_Cert
+    UNIQUE (Emp_Num, Insp_Cert)
+)
+GO  
+
+CREATE TABLE dbo.Properties(
+  /*sets prop num as PK*/
+  Prop_Num int NOT NULL
+    CONSTRAINT PK_Properties
+    PRIMARY KEY,
+  Prop_Type char(1) NOT NULL
+    /*creates check constraint for prop type to equal C or R*/
+    CONSTRAINT CHK_Properties_PropType
+    CHECK (Prop_Type IN ('C', 'R')),
+  Ven_Lname varchar(30) NOT NULL,
+  Ven_Fname varchar(30) NOT NULL,
+  Ven_Street varchar(30) NOT NULL,
+  Ven_Suburb varchar(30) NOT NULL,
+  Prop_Price money NOT NULL
+    /*creates check constraint for prop price to be bigger than 50000*/
+    CONSTRAINT CHK_Properties_PropPrice
+    CHECK (Prop_Price > 50000),
+  Prop_Age int NOT NULL
+    /*creates check constraint for prop age to be smaller than 120*/
+    CONSTRAINT CHK_Properties_PropAge    
+    CHECK (Prop_Age < 120),
+  Prop_Cond Varchar(30) NOT NULL
+    /*creates check constraint for prop cond to equal Excellent, Good, Poor or Munted*/
+    CONSTRAINT CHK_Properties_PropCond
+    CHECK (Prop_Cond IN ('Excellent', 'Good', 'Poor', 'Munted')),
+  Prop_Floor decimal(6,2) NOT NULL,
+  /*creates uniqueness constraint for prop num and prop type*/
+  CONSTRAINT UQ_Properties_PropNum_PropType
+    UNIQUE (Prop_Num, Prop_Type)
+)
+GO
+
+CREATE TABLE dbo.Residential(
+/*sets prop num as PK*/
+  Prop_Num int NOT NULL
+    CONSTRAINT PK_Residential
+    PRIMARY KEY
+	/*creates FK for prop num*/
+    CONSTRAINT FK1_Residential_Properties
+    FOREIGN KEY REFERENCES dbo.Properties(Prop_Num),
+  Prop_Type char(1) NOT NULL
+    /*creates check constraint for prop type to equal R*/
+    CONSTRAINT CHK_Residential_PropType
+    CHECK (Prop_Type = 'R'),
+  Bedrooms int NOT NULL,
+  Bathrooms int NOT NULL,
+  /*creates FK for prop num and prop type*/
+  CONSTRAINT FK2_Residential_Properties
+    FOREIGN KEY (Prop_Num, Prop_Type)
+    REFERENCES dbo.Properties(Prop_Num, Prop_Type)
+)
+GO 
+
+CREATE TABLE dbo.Commercial(
+/*sets prop num as PK*/
+  Prop_Num int NOT NULL
+    CONSTRAINT PK_Commercial
+    PRIMARY KEY
+	/*creates FK for prop num*/
+    CONSTRAINT FK1_Commercial_Properties
+    FOREIGN KEY REFERENCES dbo.Properties(Prop_Num),
+  Prop_Type char(1) NOT NULL
+    /*creates check constraint for prop type to equal C*/
+    CONSTRAINT CHK_Commercial_PropType
+    CHECK (Prop_Type = 'C'),
+  Office_Areas int NOT NULL,
+  Prop_Usage Varchar(30) NOT NULL,
+  /*creates FK for prop num and prop type*/
+  CONSTRAINT FK2_Commercial_Properties
+    FOREIGN KEY (Prop_Num, Prop_Type)
+    REFERENCES dbo.Properties(Prop_Num, Prop_Type)
+)
+GO 
+
+CREATE TABLE dbo.Viewings(
+/*sets viewing id as PK*/
+  ViewingID int NOT NULL
+    CONSTRAINT PK_Viewings
+    PRIMARY KEY,
+  Emp_Num int NOT NULL
+    /*creates FK for emp num*/
+    CONSTRAINT FK4_Viewings_Agents
+    FOREIGN KEY REFERENCES dbo.Agents(Emp_Num),
+  Prop_Num int NOT NULL
+    /*creates FK for prop num*/
+    CONSTRAINT FK2_Viewings_Properties
+    FOREIGN KEY REFERENCES dbo.Properties(Prop_Num),
+  Viewing_Type char(1) NOT NULL
+    /*creates check constraint for viewing type to equal C or R*/
+    CONSTRAINT CHK_Viewings_ViewingType
+    CHECK (Viewing_Type IN ('C', 'R')),
+  Viewing_Date date NOT NULL,
+  Viewing_Time time NOT NULL,
+  Viewing_Numbers int NOT NULL,
+  /*creates FK for prop num and viewing type*/
+  CONSTRAINT FK3_Viewings_Properties
+    FOREIGN KEY (Prop_Num, Viewing_Type)
+    REFERENCES dbo.Properties(Prop_Num, Prop_Type),
+  /*creates FK for emp num and viewing type*/
+  CONSTRAINT FK1_Viewings_Agents
+    FOREIGN KEY (Emp_Num, Viewing_Type)
+    REFERENCES dbo.Agents(Emp_Num, Agent_Cert),
+  /*creates uniqueness constraint for prop num and viewing date*/
+  CONSTRAINT UQ_Viewings_PropNum_ViewingDate
+    UNIQUE (Prop_Num, Viewing_Date)
+)
+GO 
+
+
+CREATE TABLE dbo.Inspections(
+/*sets inspection id as PK*/
+  InspectionID int NOT NULL
+    CONSTRAINT PK_Inspections
+    PRIMARY KEY,
+  Emp_Num int NOT NULL
+    /*creates FK for emp num*/
+    CONSTRAINT FK1_Inspections_Inspectors
+    FOREIGN KEY REFERENCES dbo.Inspectors(Emp_Num),
+  Prop_Num int NOT NULL
+    /*creates FK for prop num*/
+    CONSTRAINT FK2_Inspections_Properties
+    FOREIGN KEY REFERENCES dbo.Properties(Prop_Num),
+  Inspection_Type char(1) NOT NULL
+    /*creates check constraint for inspection type to equal C or R*/
+    CONSTRAINT CHK_Inspections_InspectionType
+    CHECK (Inspection_Type IN ('C', 'R')),
+  Insp_Cert char(5) NOT NULL
+    /*creates check constraint for insp cert to equal IPENZ or NZIBI*/
+    CONSTRAINT CHK_Inspections_InspCert
+    CHECK (Insp_Cert IN ('IPENZ', 'NZIBI')),
+  Inspection_Date date NOT NULL,
+  Inspection_Time time NOT NULL,
+  Inspection_Obs text,
+  /*creates FK for emp num and insp cert*/
+  CONSTRAINT FK3_Inspectors_Inspections
+    FOREIGN KEY (Emp_Num, Insp_Cert)
+    REFERENCES dbo.Inspectors(Emp_Num, Insp_Cert),
+  /*creates FK for prop num and inspection type*/
+  CONSTRAINT FK4_Inspections_Properties
+    FOREIGN KEY (Prop_Num, Inspection_Type)
+    REFERENCES dbo.Properties(Prop_Num, Prop_Type),
+  /*creates check constraint for inspection type to equal C and insp cert does not equal IPENZ*/
+  CONSTRAINT CHK_Inspections_InspectionType_InspCertType
+	CHECK (NOT(Inspection_Type = 'C' AND Insp_Cert <> 'IPENZ')),
+  /*creates uniqueness constraint for prop num and inspection date*/
+  CONSTRAINT UQ_Inspections_PropNum_InspectionDate
+    UNIQUE (Prop_Num, Inspection_Date)
+)
+GO
+
+/*uses NZPropertyBrokers database*/
+USE [NZPropertyBrokers]
+GO
+
+PRINT '
+****************** Employees *********'
+PRINT '
+Valid: Employees'
+
+INSERT INTO [dbo].[Employees] (Emp_Num, Emp_Type, Manager, Emp_Lname, Emp_Fname, Emp_Street, Emp_Suburb, Emp_City, Emp_StartDate)
+     SELECT 1, 'O', NULL, 'AAAAAAAAAAA', 'AAAAAA', 'AAAAAAAA', 'AAAAAAA', 'AAAAAAAAAA', '2000-1-1' UNION ALL
+	 SELECT 2, 'A', 1, 'BBBBBBBBBBB', 'BBBBBB', 'BBBBBBBB', 'BBBBBBBB', 'BBBBBBBBB', '2001-1-1' UNION ALL
+	 SELECT 3, 'A', 1, 'CCCCCCCCC', 'CCCCCCCC', 'CCCCCCC', 'CCCCCCCC', 'CCCCCCCC', '2002-1-1' UNION ALL
+	 SELECT 4, 'I', 1, 'DDDDDDD', 'DDDDDD', 'DDDDDDD', 'DDDDDDD', 'DDDDDD', '2003-1-1' UNION ALL
+	 SELECT 5, 'I', 1, 'EEEEEEEE', 'EEEEEEE', 'EEEEEE', 'EEEEEE', 'EEEEEEE', '2004-1-1'
+GO
+
+PRINT '
+****************** Agents *********'
+PRINT '
+Valid: Agents'
+
+INSERT INTO [dbo].[Agents] (Emp_Num, Emp_Type, Agent_Cert, Agent_Affil)
+     SELECT 2, 'A', 'C', 'AAAAAAA' UNION ALL
+	 SELECT 3, 'A', 'R', 'BBBBBBB'
+GO
+
+PRINT '
+****************** Inspectors *********'
+PRINT '
+Valid: Inspectors'
+
+INSERT INTO [dbo].[Inspectors] (Emp_Num, Emp_Type, Insp_Cert, Insp_Mem_Num)
+     SELECT 4, 'I', 'NZIBI', 123 UNION ALL
+	 SELECT 5, 'I', 'IPENZ', 456
+GO
+
+PRINT '
+****************** Properties *********'
+PRINT '
+Valid: Properties'
+
+INSERT INTO [dbo].[Properties] (Prop_Num, Prop_Type, Ven_Lname, Ven_Fname, Ven_Street, Ven_Suburb, Prop_Price, Prop_Age, Prop_Cond, Prop_Floor)
+     SELECT 1, 'C', 'AAAAAAAA', 'AAAAAAA', 'AAAAAAA', 'AAAAAAAA', 450000, 14, 'Excellent', 210 UNION ALL
+     SELECT 2, 'R', 'BBBBBBBB', 'BBBBBB', 'BBBBB', 'BBBBB', 150000, 14, 'Poor', 150 
+GO
+
+PRINT '
+****************** Commercial *********'
+PRINT '
+Valid: Commercial'
+
+INSERT INTO [dbo].[Commercial] (Prop_Num, Prop_Type, Office_Areas, Prop_Usage)
+     VALUES (1, 'C', 7, 'Retail')
+GO
+
+PRINT '
+****************** Residential *********'
+PRINT '
+Valid: Residential'
+
+INSERT INTO [dbo].[Residential] (Prop_Num, Prop_Type, Bedrooms, Bathrooms)
+     VALUES (2, 'R', 3, 1)
+          
+GO
+
+PRINT '
+****************** Viewings *********'
+PRINT '
+Valid: Viewings'
+
+INSERT INTO [dbo].[Viewings] (ViewingID, Emp_Num, Prop_Num, Viewing_Type, Viewing_Date, Viewing_Time, Viewing_Numbers)
+     SELECT 1, 2, 1, 'C', '2018-1-1', '13:30', 10 UNION ALL
+	 SELECT 2, 3, 2, 'R', '2018-2-1', '15:00', 12
+GO
+
+/*uses NZPropertyBrokers database*/
+USE [NZPropertyBrokers]
+GO
+
+PRINT '
+****************** Inspections *********'
+PRINT '
+Valid: Inspections'
+
+INSERT INTO [dbo].[Inspections] (InspectionID, Emp_Num, Prop_Num, Inspection_Type, Insp_Cert, Inspection_Date, Inspection_Time, Inspection_Obs)
+     SELECT 1, 5, 2, 'R', 'IPENZ', '2018-1-1', '16:00', 'AAAAAAAAAAAAAA' UNION ALL
+	 SELECT 2, 4, 2, 'R', 'NZIBI', '2018-2-1', '17:00', 'BBBBBBBBB' UNION ALL
+	 SELECT 3, 5, 1, 'C', 'IPENZ', '2018-3-1', '14:30', 'CCCCCCCC' 
+GO
+
+/*-----------STORED PROCEDURES-----------*/
+/*-------Task 3. a)-------*/
+/*creates a stored procedure using input parameters to add a new agent to the employees and agents tables*/
+CREATE PROCEDURE [dbo].[spAddNewAgent]
+	@Emp_Num int,
+	@Emp_Type char(1),
+	@Manager int,
+	@Emp_Lname varchar(30),
+	@Emp_Fname varchar(30),
+	@Emp_Street varchar(30),
+	@Emp_Suburb varchar(30),
+	@Emp_City varchar(30),
+	@Emp_StartDate date,
+	@Agent_Cert char(1),
+	@Agent_Affil varchar(30)
+AS
+
+BEGIN 
+
+	INSERT INTO Employees (Emp_Num, Emp_Type, Manager, Emp_Lname, Emp_Fname , Emp_Street, Emp_Suburb, Emp_City, Emp_StartDate)
+	VALUES     (@Emp_Num, @Emp_Type, @Manager, @Emp_Lname, @Emp_Fname, @Emp_Street, @Emp_Suburb, @Emp_City, @Emp_StartDate);
+
+	INSERT INTO Agents (Emp_Num, Emp_Type, Agent_Cert, Agent_Affil)
+	VALUES     (@Emp_Num, @Emp_Type, @Agent_Cert, @Agent_Affil);
+END
+GO
+
+/*-------Task 3. b)-------*/
+/*creates a stored procedure using input parameters to add a new inspector to the employees and inspectors tables*/
+CREATE PROCEDURE [dbo].[spAddNewInspector]
+	@Emp_Num int,
+	@Emp_Type char(1),
+	@Manager int,
+	@Emp_Lname varchar(30),
+	@Emp_Fname varchar(30),
+	@Emp_Street varchar(30),
+	@Emp_Suburb varchar(30),
+	@Emp_City varchar(30),
+	@Emp_StartDate date,
+	@Insp_Cert char(5),
+	@Insp_Mem_Num int
+AS
+
+BEGIN 
+
+	INSERT INTO Employees (Emp_Num, Emp_Type, Manager, Emp_Lname, Emp_Fname , Emp_Street, Emp_Suburb, Emp_City, Emp_StartDate)
+	VALUES     (@Emp_Num, @Emp_Type, @Manager, @Emp_Lname, @Emp_Fname, @Emp_Street, @Emp_Suburb, @Emp_City, @Emp_StartDate);
+
+	INSERT INTO Inspectors (Emp_Num, Emp_Type, Insp_Cert, Insp_Mem_Num)
+	VALUES     (@Emp_Num, @Emp_Type, @Insp_Cert, @Insp_Mem_Num);
+END
+GO
+
+/*-------Task 3. c)-------*/
+/*creates a stored procedure using input parameters to add a new employee to the employees table with emp type set to O*/
+CREATE PROCEDURE [dbo].[spAddNewEmployee]
+	@Emp_Num int,
+	@Emp_Type char(1),
+	@Manager int,
+	@Emp_Lname varchar(30),
+	@Emp_Fname varchar(30),
+	@Emp_Street varchar(30),
+	@Emp_Suburb varchar(30),
+	@Emp_City varchar(30),
+	@Emp_StartDate date
+AS
+
+BEGIN 
+
+	INSERT INTO Employees (Emp_Num, Emp_Type, Manager, Emp_Lname, Emp_Fname , Emp_Street, Emp_Suburb, Emp_City, Emp_StartDate)
+	VALUES  (@Emp_Num, 'O', @Manager, @Emp_Lname, @Emp_Fname, @Emp_Street, @Emp_Suburb, @Emp_City, @Emp_StartDate);
+END
+GO
+
+/*-------Task 3. d)-------*/
+/*creates a table to store data for the viewing report*/
+CREATE TABLE [dbo].[ViewingReport](
+	[Emp_Num] [int] NOT NULL,
+	[Emp_Fname] [char](10) NOT NULL,
+	[Emp_Lname] [char](10) NOT NULL,
+	[Agent_Cert] [char](1) NOT NULL,
+	[Prop_Num] [int] NOT NULL,
+	[Viewing_Date] [date] NOT NULL,
+	[Viewing_Type] [char](1) NOT NULL,
+	[Viewing_Numbers] [int] NOT NULL,
+	[Ven_Lname] [char](30) NOT NULL,
+	[Prop_Price] [int] NOT NULL)
+
+GO
+
+/*creates a stored procedure using input parameters to select data from viewing report table*/
+CREATE PROCEDURE [dbo].[spViewingsReport]
+ @YEAR int, 
+ @MONTH int
+	
+AS
+BEGIN
+
+	SELECT Emp_Fname, Emp_Lname, Agents.Agent_Cert, Viewings.Prop_Num, Viewing_Date, Viewing_Type, Viewing_Numbers, Properties.Ven_Lname, Prop_Price FROM Viewings
+	INNER JOIN Employees
+	ON Viewings.Emp_Num = Employees.Emp_Num 
+	INNER JOIN Properties
+	ON Viewings.Prop_Num = Properties.Prop_Num 
+	INNER JOIN Agents
+	ON Viewings.Emp_Num = Agents.Emp_Num
+	AND YEAR(Viewing_Date) = @YEAR
+	AND MONTH(Viewing_Date) = @MONTH
+	ORDER BY Viewing_Date
+	INSERT INTO ViewingReport (Emp_Num, Emp_Fname, Emp_Lname, Agent_Cert, Viewings.Prop_Num, Viewing_Date, Viewing_Type, Viewing_Numbers, Properties.Ven_Lname, Prop_Price)
+	SELECT Emp_Num, Emp_Fname, Emp_Lname, Agent_Cert, Prop_Num, Viewing_Date, Viewing_Type, Viewing_Numbers, Ven_Lname, Prop_Price FROM ViewingReport
+
+END
+GO
+
+/*-------Task 3. e)-------*/
+/*creates a table to store data for the inspection report*/
+CREATE TABLE [dbo].[InspectionReport](
+	[Emp_Num] [int] NOT NULL,
+	[Emp_Fname] [char](10) NOT NULL,
+	[Emp_Lname] [char](10) NOT NULL,
+	[Insp_Cert] [char](5) NOT NULL,
+	[Prop_Num] [char](10) NOT NULL,
+	[Inspection_Date] [date] NOT NULL,
+	[Inspection_Type] [char](10) NOT NULL,
+	[Ven_Lname] [char](10) NOT NULL,
+	[Prop_Price] [char](10) NOT NULL,)
+
+GO
+
+/*creates a stored procedure using input parameters to select data from inspection report table*/
+CREATE PROCEDURE [dbo].[spInspectionsReport]
+ @YEAR int, 
+ @MONTH int
+	
+AS
+BEGIN
+
+	SELECT Emp_Fname, Emp_Lname, Inspections.Insp_Cert, Inspections.Prop_Num, Inspection_Date, Inspection_Type, Properties.Ven_Lname, Prop_Price FROM Inspections
+	INNER JOIN Employees
+	ON Inspections.Emp_Num = Employees.Emp_Num 
+	INNER JOIN Properties
+	ON Inspections.Prop_Num = Properties.Prop_Num 
+	INNER JOIN Inspectors
+	ON Inspections.Emp_Num = Inspectors.Emp_Num
+	AND YEAR(Inspection_Date) = @YEAR
+	AND MONTH(Inspection_Date) = @MONTH
+	ORDER BY Inspection_Date
+	INSERT INTO InspectionReport (Emp_Num, Emp_Fname, Emp_Lname, Insp_Cert, Inspections.Prop_Num, Inspection_Date, Inspection_Type, Properties.Ven_Lname, Prop_Price)
+	SELECT Emp_Num, Emp_Fname, Emp_Lname, Insp_Cert, Prop_Num, Inspection_Date, Inspection_Type, Ven_Lname, Prop_Price FROM InspectionReport
+
+END
+GO
